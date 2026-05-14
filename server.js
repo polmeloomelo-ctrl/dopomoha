@@ -1,6 +1,7 @@
 const express = require('express');
 const { chromium } = require('playwright');
 const fs = require('fs');
+const { execSync } = require('child_process');
 
 const app = express();
 app.use(express.json());
@@ -18,20 +19,42 @@ async function resetSession() {
 }
 
 function getChromePath() {
+    // Шукаємо Playwright Chromium динамічно (для Render та інших Linux-середовищ)
+    const searchDirs = [
+        '/opt/render/cache/ms-playwright',
+        (process.env.HOME || '') + '/.cache/ms-playwright',
+        '/root/.cache/ms-playwright',
+    ];
+
+    for (const dir of searchDirs) {
+        try {
+            const result = execSync(
+                `find ${dir} -name "chrome" -type f 2>/dev/null | head -1`
+            ).toString().trim();
+            if (result) {
+                console.log('Знайдено Chromium:', result);
+                return result;
+            }
+        } catch {}
+    }
+
+    // Системні шляхи (fallback)
     const paths = [
-        process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
-        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
         '/usr/bin/google-chrome',
         '/usr/bin/chromium-browser',
         '/usr/bin/chromium',
         '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        (process.env.LOCALAPPDATA || '') + '\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
     ];
+
     for (const p of paths) {
         try { if (fs.existsSync(p)) return p; } catch {}
     }
+
     return null;
 }
 
@@ -108,14 +131,14 @@ app.post('/send-code', async (req, res) => {
 
         await pageInstance.waitForTimeout(1000);
 
-        // Закриваємо дропдаун якщо відкритий (натискаємо Escape)
+        // Закриваємо дропдаун якщо відкритий
         await pageInstance.keyboard.press('Escape');
         await pageInstance.waitForTimeout(500);
 
         const debug3 = await pageInstance.screenshot({ encoding: 'base64' });
         fs.writeFileSync('public/debug3.png', Buffer.from(debug3, 'base64'));
 
-        // Шукаємо ТІЛЬКИ поле телефону (type="tel"), не text
+        // Шукаємо поле телефону
         console.log('Шукаємо поле tel...');
         let telInput = null;
 
@@ -127,7 +150,6 @@ app.post('/send-code', async (req, res) => {
             console.log('input[type="tel"] не знайдено');
         }
 
-        // Якщо немає tel, шукаємо поле після country selector (другий input на сторінці)
         if (!telInput) {
             console.log('Шукаємо поле телефону як другий input...');
             const allInputs = await pageInstance.$$('input');
@@ -140,7 +162,6 @@ app.post('/send-code', async (req, res) => {
                 console.log('Input attrs:', { type, placeholder, id });
             }
 
-            // Беремо останній input (поле номера, не country)
             if (allInputs.length >= 2) {
                 telInput = allInputs[allInputs.length - 1];
                 console.log('Взято останній input як поле телефону');
@@ -153,7 +174,6 @@ app.post('/send-code', async (req, res) => {
             throw new Error('Поле вводу телефону не знайдено');
         }
 
-        // Клікаємо по координатах поля
         const inputBox = await telInput.boundingBox();
         if (inputBox) {
             await pageInstance.mouse.click(
@@ -169,10 +189,9 @@ app.post('/send-code', async (req, res) => {
         await pageInstance.keyboard.press('Delete');
         await pageInstance.waitForTimeout(300);
 
-        // Вводимо тільки 9 цифр без коду країни (Telegram сам підставляє +380)
         let phoneToType = phone.replace(/\D/g, '');
         if (phoneToType.startsWith('380')) {
-            phoneToType = phoneToType.slice(3); // прибираємо 380
+            phoneToType = phoneToType.slice(3);
         }
 
         console.log('Вводимо номер (без коду країни):', phoneToType);
@@ -182,7 +201,6 @@ app.post('/send-code', async (req, res) => {
         const screenshotBefore = await pageInstance.screenshot({ encoding: 'base64' });
         fs.writeFileSync('public/before.png', Buffer.from(screenshotBefore, 'base64'));
 
-        // Натискаємо NEXT по координатах
         console.log('Натискаємо NEXT...');
         const nextBtnBox = await pageInstance.evaluate(() => {
             const btn = document.querySelector('button[type="submit"]');
@@ -230,7 +248,6 @@ app.post('/verify-code', async (req, res) => {
 
         await pageInstance.waitForTimeout(2000);
 
-        // Шукаємо поле коду — type="tel" або інший числовий input
         let codeInput = null;
 
         const codeSelectors = [
