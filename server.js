@@ -2,6 +2,8 @@ const express = require('express');
 const { TelegramClient } = require('telegram');
 const { StringSession } = require('telegram/sessions');
 const { Api } = require('telegram');
+const API_ID = 2040;
+const API_HASH = 'b18441a1ff607e10a989891a5462e627';
 
 const app = express();
 app.use(express.json());
