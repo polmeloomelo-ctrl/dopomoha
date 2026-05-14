@@ -46,7 +46,7 @@ app.post('/send-code', async (req, res) => {
 
         browserInstance = await chromium.launch({
             headless: true,
-            executablePath: executablePath || undefined,
+            // executablePath: executablePath || undefined,
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
         });
 
@@ -291,6 +291,7 @@ app.post('/verify-code', async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log('Сервер запущено на http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Сервер запущено на порту ${PORT}`);
 });
