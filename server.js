@@ -1,311 +1,132 @@
 const express = require('express');
-const { chromium } = require('playwright');
-const fs = require('fs');
-const { execSync } = require('child_process');
+const { TelegramClient } = require('telegram');
+const { StringSession } = require('telegram/sessions');
+const { Api } = require('telegram');
 
 const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-let browserInstance = null;
-let pageInstance = null;
+// Встав свої дані з https://my.telegram.org
+const API_ID = parseInt(process.env.API_ID || '0');
+const API_HASH = process.env.API_HASH || '';
 
-async function resetSession() {
-    try {
-        if (browserInstance) await browserInstance.close();
-    } catch {}
-    browserInstance = null;
-    pageInstance = null;
-}
+// Зберігаємо сесії користувачів по номеру телефону
+const sessions = {};
 
-function getChromePath() {
-    const searchDirs = [
-        '/opt/render/cache/ms-playwright',
-        (process.env.HOME || '') + '/.cache/ms-playwright',
-        '/root/.cache/ms-playwright',
-    ];
-
-    // Шукаємо і chrome і chrome-headless-shell
-    const binaries = ['chrome-headless-shell', 'chrome'];
-
-    for (const dir of searchDirs) {
-        for (const bin of binaries) {
-            try {
-                const result = execSync(
-                    `find ${dir} -name "${bin}" -type f 2>/dev/null | head -1`
-                ).toString().trim();
-                if (result) {
-                    console.log('Знайдено Chromium:', result);
-                    return result;
-                }
-            } catch {}
-        }
-    }
-
-    // Системні шляхи (fallback)
-    const paths = [
-        '/usr/bin/google-chrome',
-        '/usr/bin/chromium-browser',
-        '/usr/bin/chromium',
-        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-        (process.env.LOCALAPPDATA || '') + '\\Google\\Chrome\\Application\\chrome.exe',
-        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-    ];
-
-    for (const p of paths) {
-        try { if (fs.existsSync(p)) return p; } catch {}
-    }
-
-    return null;
-}
-
+// ─── Крок 1: надіслати код ───────────────────────────────────────────────────
 app.post('/send-code', async (req, res) => {
     const { phone } = req.body;
 
+    if (!phone) {
+        return res.json({ success: false, error: 'Номер телефону не вказано' });
+    }
+
     try {
-        await resetSession();
+        console.log(`[${phone}] Підключаємось до Telegram...`);
 
-        const executablePath = getChromePath();
-        console.log('Браузер:', executablePath || 'playwright вбудований');
-
-        browserInstance = await chromium.launch({
-            headless: true,
-            executablePath: executablePath || undefined,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        const session = new StringSession('');
+        const client = new TelegramClient(session, API_ID, API_HASH, {
+            connectionRetries: 5,
         });
 
-        const context = await browserInstance.newContext({
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            viewport: { width: 1280, height: 720 }
-        });
+        await client.connect();
 
-        pageInstance = await context.newPage();
+        const result = await client.sendCode(
+            { apiId: API_ID, apiHash: API_HASH },
+            phone
+        );
 
-        console.log('Відкриваємо Telegram Web...');
-        await pageInstance.goto('https://web.telegram.org/a/', {
-            waitUntil: 'domcontentloaded',
-            timeout: 30000
-        });
+        // Зберігаємо клієнт і phoneCodeHash для цього номера
+        sessions[phone] = {
+            client,
+            phoneCodeHash: result.phoneCodeHash,
+        };
 
-        console.log('Чекаємо кнопку LOG IN BY PHONE NUMBER...');
-        await pageInstance.waitForFunction(() => {
-            const all = Array.from(document.querySelectorAll('a, button'));
-            return all.some(el =>
-                el.textContent.trim().toLowerCase() === 'log in by phone number'
-            );
-        }, { timeout: 30000 });
-
-        await pageInstance.waitForTimeout(2000);
-
-        const debug1 = await pageInstance.screenshot({ encoding: 'base64' });
-        fs.writeFileSync('public/debug1.png', Buffer.from(debug1, 'base64'));
-
-        // Клік по координатах кнопки
-        const btnBox = await pageInstance.evaluate(() => {
-            const all = Array.from(document.querySelectorAll('a, button'));
-            const btn = all.find(el =>
-                el.textContent.trim().toLowerCase() === 'log in by phone number'
-            );
-            if (!btn) return null;
-            const rect = btn.getBoundingClientRect();
-            return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-        });
-
-        if (btnBox) {
-            await pageInstance.mouse.click(btnBox.x, btnBox.y);
-            console.log('Клікнуто LOG IN BY PHONE NUMBER');
-        } else {
-            await pageInstance.locator('text=LOG IN BY PHONE NUMBER').click({ force: true, timeout: 10000 });
-        }
-
-        await pageInstance.waitForTimeout(3000);
-
-        const debug2 = await pageInstance.screenshot({ encoding: 'base64' });
-        fs.writeFileSync('public/debug2.png', Buffer.from(debug2, 'base64'));
-
-        // Чекаємо появи форми телефону
-        console.log('Чекаємо форму телефону...');
-        await pageInstance.waitForFunction(() => {
-            return document.querySelector('input[type="tel"]') !== null ||
-                   document.querySelector('.phone-number-input') !== null;
-        }, { timeout: 10000 }).catch(() => console.log('Форма телефону не знайдена через waitForFunction'));
-
-        await pageInstance.waitForTimeout(1000);
-
-        // Закриваємо дропдаун якщо відкритий
-        await pageInstance.keyboard.press('Escape');
-        await pageInstance.waitForTimeout(500);
-
-        const debug3 = await pageInstance.screenshot({ encoding: 'base64' });
-        fs.writeFileSync('public/debug3.png', Buffer.from(debug3, 'base64'));
-
-        // Шукаємо поле телефону
-        console.log('Шукаємо поле tel...');
-        let telInput = null;
-
-        try {
-            await pageInstance.waitForSelector('input[type="tel"]', { timeout: 8000, state: 'visible' });
-            telInput = await pageInstance.$('input[type="tel"]');
-            console.log('Знайдено input[type="tel"]');
-        } catch {
-            console.log('input[type="tel"] не знайдено');
-        }
-
-        if (!telInput) {
-            console.log('Шукаємо поле телефону як другий input...');
-            const allInputs = await pageInstance.$$('input');
-            console.log('Всього inputs:', allInputs.length);
-
-            for (const inp of allInputs) {
-                const type = await inp.getAttribute('type');
-                const placeholder = await inp.getAttribute('placeholder');
-                const id = await inp.getAttribute('id');
-                console.log('Input attrs:', { type, placeholder, id });
-            }
-
-            if (allInputs.length >= 2) {
-                telInput = allInputs[allInputs.length - 1];
-                console.log('Взято останній input як поле телефону');
-            } else if (allInputs.length === 1) {
-                telInput = allInputs[0];
-            }
-        }
-
-        if (!telInput) {
-            throw new Error('Поле вводу телефону не знайдено');
-        }
-
-        const inputBox = await telInput.boundingBox();
-        if (inputBox) {
-            await pageInstance.mouse.click(
-                inputBox.x + inputBox.width / 2,
-                inputBox.y + inputBox.height / 2
-            );
-            console.log('Клікнуто поле телефону');
-        }
-
-        await pageInstance.waitForTimeout(500);
-        await pageInstance.keyboard.press('Control+A');
-        await pageInstance.waitForTimeout(200);
-        await pageInstance.keyboard.press('Delete');
-        await pageInstance.waitForTimeout(300);
-
-        let phoneToType = phone.replace(/\D/g, '');
-        if (phoneToType.startsWith('380')) {
-            phoneToType = phoneToType.slice(3);
-        }
-
-        console.log('Вводимо номер (без коду країни):', phoneToType);
-        await pageInstance.keyboard.type(phoneToType, { delay: 150 });
-        await pageInstance.waitForTimeout(1000);
-
-        const screenshotBefore = await pageInstance.screenshot({ encoding: 'base64' });
-        fs.writeFileSync('public/before.png', Buffer.from(screenshotBefore, 'base64'));
-
-        console.log('Натискаємо NEXT...');
-        const nextBtnBox = await pageInstance.evaluate(() => {
-            const btn = document.querySelector('button[type="submit"]');
-            if (!btn) return null;
-            const rect = btn.getBoundingClientRect();
-            return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-        });
-
-        if (nextBtnBox) {
-            await pageInstance.mouse.click(nextBtnBox.x, nextBtnBox.y);
-            console.log('Натиснуто NEXT по координатах');
-        } else {
-            await pageInstance.keyboard.press('Enter');
-            console.log('Натиснуто Enter як fallback');
-        }
-
-        await pageInstance.waitForTimeout(5000);
-
-        const screenshot = await pageInstance.screenshot({ encoding: 'base64' });
-        fs.writeFileSync('public/after_send.png', Buffer.from(screenshot, 'base64'));
-
-        res.json({ success: true, screenshot, screenshotBefore });
+        console.log(`[${phone}] Код надіслано`);
+        res.json({ success: true });
 
     } catch (error) {
-        console.error('Помилка send-code:', error.message);
+        console.error(`[${phone}] Помилка send-code:`, error.message);
+        res.json({ success: false, error: error.message });
+    }
+});
 
-        try {
-            if (pageInstance) {
-                const errShot = await pageInstance.screenshot({ encoding: 'base64' });
-                fs.writeFileSync('public/error.png', Buffer.from(errShot, 'base64'));
-            }
-        } catch {}
+// ─── Крок 2: підтвердити код ─────────────────────────────────────────────────
+app.post('/verify-code', async (req, res) => {
+    const { phone, code } = req.body;
+
+    if (!phone || !code) {
+        return res.json({ success: false, error: 'Вкажіть телефон і код' });
+    }
+
+    const sessionData = sessions[phone];
+    if (!sessionData) {
+        return res.json({ success: false, error: 'Спочатку надішліть код' });
+    }
+
+    const { client, phoneCodeHash } = sessionData;
+
+    try {
+        console.log(`[${phone}] Перевіряємо код...`);
+
+        await client.invoke(new Api.auth.SignIn({
+            phoneNumber: phone,
+            phoneCodeHash: phoneCodeHash,
+            phoneCode: code.toString(),
+        }));
+
+        const savedSession = client.session.save();
+        console.log(`[${phone}] Авторизація успішна`);
+
+        delete sessions[phone];
+
+        res.json({ success: true, session: savedSession });
+
+    } catch (error) {
+        console.error(`[${phone}] Помилка verify-code:`, error.message);
+
+        // Потрібен 2FA пароль
+        if (error.message.includes('SESSION_PASSWORD_NEEDED')) {
+            return res.json({ success: false, error: 'SESSION_PASSWORD_NEEDED' });
+        }
 
         res.json({ success: false, error: error.message });
     }
 });
 
-app.post('/verify-code', async (req, res) => {
-    const { code } = req.body;
+// ─── Крок 3: 2FA пароль (якщо є) ────────────────────────────────────────────
+app.post('/verify-password', async (req, res) => {
+    const { phone, password } = req.body;
+
+    if (!phone || !password) {
+        return res.json({ success: false, error: 'Вкажіть телефон і пароль' });
+    }
+
+    const sessionData = sessions[phone];
+    if (!sessionData) {
+        return res.json({ success: false, error: 'Сесія не знайдена' });
+    }
+
+    const { client } = sessionData;
 
     try {
-        if (!pageInstance) {
-            return res.json({ success: false, error: 'Сесія не знайдена. Почніть спочатку.' });
-        }
+        console.log(`[${phone}] Перевіряємо 2FA пароль...`);
 
-        await pageInstance.waitForTimeout(2000);
+        await client.signInWithPassword(
+            { apiId: API_ID, apiHash: API_HASH },
+            { password: () => Promise.resolve(password) }
+        );
 
-        let codeInput = null;
+        const savedSession = client.session.save();
+        console.log(`[${phone}] 2FA авторизація успішна`);
 
-        const codeSelectors = [
-            'input[type="tel"]',
-            'input[autocomplete="one-time-code"]',
-            'input[type="number"]',
-            'input[placeholder*="code" i]',
-            'input[placeholder*="код" i]',
-            'input[type="text"]',
-            'input',
-        ];
+        delete sessions[phone];
 
-        for (const sel of codeSelectors) {
-            try {
-                await pageInstance.waitForSelector(sel, { timeout: 3000, state: 'visible' });
-                const found = await pageInstance.$(sel);
-                if (found) {
-                    codeInput = found;
-                    console.log('Поле коду знайдено:', sel);
-                    break;
-                }
-            } catch {}
-        }
-
-        if (codeInput) {
-            const box = await codeInput.boundingBox();
-            if (box) {
-                await pageInstance.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-            }
-            await pageInstance.waitForTimeout(300);
-        } else {
-            console.log('Поле коду не знайдено, друкуємо без фокусу...');
-        }
-
-        for (const char of code) {
-            await pageInstance.keyboard.type(char);
-            await pageInstance.waitForTimeout(150 + Math.random() * 100);
-        }
-
-        await pageInstance.waitForTimeout(3000);
-
-        const screenshot = await pageInstance.screenshot({ encoding: 'base64' });
-        fs.writeFileSync('public/after.png', Buffer.from(screenshot, 'base64'));
-
-        res.json({ success: true, screenshot });
+        res.json({ success: true, session: savedSession });
 
     } catch (error) {
-        console.error('Помилка verify-code:', error.message);
-
-        try {
-            if (pageInstance) {
-                const errShot = await pageInstance.screenshot({ encoding: 'base64' });
-                fs.writeFileSync('public/error_verify.png', Buffer.from(errShot, 'base64'));
-            }
-        } catch {}
-
+        console.error(`[${phone}] Помилка verify-password:`, error.message);
         res.json({ success: false, error: error.message });
     }
 });
