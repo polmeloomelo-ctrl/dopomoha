@@ -19,23 +19,27 @@ async function resetSession() {
 }
 
 function getChromePath() {
-    // Шукаємо Playwright Chromium динамічно (для Render та інших Linux-середовищ)
     const searchDirs = [
         '/opt/render/cache/ms-playwright',
         (process.env.HOME || '') + '/.cache/ms-playwright',
         '/root/.cache/ms-playwright',
     ];
 
+    // Шукаємо і chrome і chrome-headless-shell
+    const binaries = ['chrome-headless-shell', 'chrome'];
+
     for (const dir of searchDirs) {
-        try {
-            const result = execSync(
-                `find ${dir} -name "chrome" -type f 2>/dev/null | head -1`
-            ).toString().trim();
-            if (result) {
-                console.log('Знайдено Chromium:', result);
-                return result;
-            }
-        } catch {}
+        for (const bin of binaries) {
+            try {
+                const result = execSync(
+                    `find ${dir} -name "${bin}" -type f 2>/dev/null | head -1`
+                ).toString().trim();
+                if (result) {
+                    console.log('Знайдено Chromium:', result);
+                    return result;
+                }
+            } catch {}
+        }
     }
 
     // Системні шляхи (fallback)
@@ -47,8 +51,6 @@ function getChromePath() {
         (process.env.LOCALAPPDATA || '') + '\\Google\\Chrome\\Application\\chrome.exe',
         'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
     ];
 
     for (const p of paths) {
